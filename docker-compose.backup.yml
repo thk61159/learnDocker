@@ -1,0 +1,15 @@
+version: '3'
+#each container refer to server?將所有想設定的container 寫在裡面
+services:
+  node-app:
+    build: .
+    ports:
+        - "3000:4000"
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    environment:
+      - PORT=4000
+    # env_file:
+    #   - ./.env
+      
