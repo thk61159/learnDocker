@@ -1,26 +1,34 @@
+const cors = require('cors')
 const express = require('express')
-const mongoose = require('mongoose')
-const { MONGO_URL } = require('./config/config.js')
-const postsRouter = require('./routes/postRoutes.js')
+const session = require('express-session')
+const RedisStore = require('connect-redis').default
+
+
+const { SESSION_SECRET } = require('./config/config.js')
+const redisClient = require('./config/redisConnect.js')
+const routes = require('./routes')
+require('./config/mongoConnect.js')
+
 const app = express()
+app.use(cors())
+app.enable("trust proxy")
+app.use(
+	session({
+		store: new RedisStore({ client: redisClient }),
+		secret: SESSION_SECRET || 'secret',
+		cookie: {
+			secure: false,
+			httpOnly: true,
+			maxAge: 300000,
+		},
+		resave: false,
+		saveUninitialized: false,
+	})
+)
 app.use(express.json())
-const connectWithRetry = () => {
-  mongoose
-		.connect(MONGO_URL)
-		.then(() => console.log('connect to DB successfully'))
-    .catch(e => {
-      console.log(e)
-      setTimeout(connectWithRetry,5000)
-    })
-}
-connectWithRetry()
+app.use(routes)
 
-app.get('/', (req, res) => {
-	res.send('hi tset docker compose test  ')
-})
-app.use('/api/v1/posts', postsRouter)
 const PORT = process.env.PORT || 3000
-
 app.listen(PORT, (req, res) => {
 	console.log(`listening on port ${PORT}`)
 })
